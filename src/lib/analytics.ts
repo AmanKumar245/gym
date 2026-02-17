@@ -53,3 +53,31 @@ export const getEventCounts = async () => {
 
   return counts;
 };
+
+export const getEventTimeline = async () => {
+  const { data, error } = await supabase
+    .from('analytics')
+    .select('created_at')
+    .order('created_at', { ascending: true });
+
+  if (error) {
+    console.error('Error fetching timeline:', error);
+    return [];
+  }
+
+  const timelineMap: Record<string, number> = {};
+
+  data?.forEach(item => {
+    const date = new Date(item.created_at);
+    const hour = date.getHours();
+    const dateStr = date.toLocaleDateString();
+    const timeKey = `${dateStr} ${hour}:00`;
+
+    timelineMap[timeKey] = (timelineMap[timeKey] || 0) + 1;
+  });
+
+  return Object.entries(timelineMap).map(([time, count]) => ({
+    time,
+    count
+  }));
+};

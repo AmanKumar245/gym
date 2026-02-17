@@ -1,11 +1,42 @@
-import { useEffect } from 'react';
-import { CheckCircle, Shield, Zap, Heart } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { CheckCircle, Shield, Zap, Heart, ShoppingCart } from 'lucide-react';
 import { trackEvent } from '../lib/analytics';
+import { supabase } from '../lib/supabase';
+import { Product } from '../types';
 
-export const BlogPage = () => {
+interface BlogPageProps {
+  onBuyFromBlog?: (product: Product) => void;
+}
+
+export const BlogPage = ({ onBuyFromBlog }: BlogPageProps) => {
+  const [products, setProducts] = useState<Product[]>([]);
+
   useEffect(() => {
     trackEvent({ event_type: 'page_view', event_data: { page: 'blog' } });
+    fetchProducts();
   }, []);
+
+  const fetchProducts = async () => {
+    try {
+      const { data } = await supabase
+        .from('products')
+        .select('*')
+        .limit(3);
+      setProducts(data || []);
+    } catch (error) {
+      console.error('Error fetching products:', error);
+    }
+  };
+
+  const handleBuyFromBlog = (product: Product) => {
+    trackEvent({
+      event_type: 'buy_from_blog',
+      event_data: { product_id: product.id, product_name: product.name }
+    });
+    if (onBuyFromBlog) {
+      onBuyFromBlog(product);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -170,6 +201,81 @@ export const BlogPage = () => {
                 Shop Now
               </button>
             </div>
+          </div>
+        </article>
+
+        <article className="bg-white rounded-lg shadow-md p-8">
+          <h2 className="text-3xl font-bold text-slate-900 mb-8">
+            Explore Our Premium Collections
+          </h2>
+
+          <div className="grid md:grid-cols-3 gap-6">
+            {products.map(product => (
+              <div
+                key={product.id}
+                className="border border-slate-200 rounded-lg overflow-hidden hover:shadow-lg transition-shadow"
+              >
+                <img
+                  src={product.image_url}
+                  alt={product.name}
+                  className="w-full h-48 object-cover"
+                />
+
+                <div className="p-6">
+                  <h3 className="text-xl font-bold text-slate-900 mb-2">
+                    {product.name}
+                  </h3>
+
+                  <p className="text-slate-600 text-sm mb-4 leading-relaxed">
+                    {product.description}
+                  </p>
+
+                  <div className="space-y-3 mb-6">
+                    <div className="flex items-start">
+                      <CheckCircle className="h-5 w-5 text-emerald-600 mr-2 flex-shrink-0 mt-0.5" />
+                      <span className="text-sm text-slate-700">
+                        Premium quality materials
+                      </span>
+                    </div>
+                    <div className="flex items-start">
+                      <CheckCircle className="h-5 w-5 text-emerald-600 mr-2 flex-shrink-0 mt-0.5" />
+                      <span className="text-sm text-slate-700">
+                        Superior moisture absorption
+                      </span>
+                    </div>
+                    <div className="flex items-start">
+                      <CheckCircle className="h-5 w-5 text-emerald-600 mr-2 flex-shrink-0 mt-0.5" />
+                      <span className="text-sm text-slate-700">
+                        30-day money-back guarantee
+                      </span>
+                    </div>
+                    <div className="flex items-start">
+                      <CheckCircle className="h-5 w-5 text-emerald-600 mr-2 flex-shrink-0 mt-0.5" />
+                      <span className="text-sm text-slate-700">
+                        Perfect fit for all wrist sizes
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="border-t pt-4 mb-4">
+                    <p className="text-2xl font-bold text-slate-900">
+                      ${product.price.toFixed(2)}
+                    </p>
+                    <p className="text-sm text-slate-500 mt-1">
+                      Stock: {product.stock} units available
+                    </p>
+                  </div>
+
+                  <button
+                    onClick={() => handleBuyFromBlog(product)}
+                    className="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-3 rounded-lg font-bold flex items-center justify-center space-x-2 transition-colors"
+                  >
+                    <ShoppingCart className="h-5 w-5" />
+                    <span>Buy Now</span>
+                  </button>
+                </div>
+              </div>
+            ))}
           </div>
         </article>
       </div>

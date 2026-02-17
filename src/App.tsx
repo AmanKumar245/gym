@@ -19,6 +19,11 @@ function App() {
     addToCart(product, 1);
   };
 
+  const handleBuyFromBlog = (product: Product) => {
+    addToCart(product, 1);
+    setCurrentPage('cart');
+  };
+
   const handleCheckout = () => {
     setCurrentPage('checkout');
   };
@@ -42,7 +47,7 @@ function App() {
 
       {currentPage === 'products' && <ProductsPage onAddToCart={handleAddToCart} />}
 
-      {currentPage === 'blog' && <BlogPage />}
+      {currentPage === 'blog' && <BlogPage onBuyFromBlog={handleBuyFromBlog} />}
 
       {currentPage === 'cart' && (
         <CartPage

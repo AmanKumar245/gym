@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react';
-import { BarChart3, TrendingUp, ShoppingCart, Eye, CreditCard } from 'lucide-react';
-import { getEventCounts, trackEvent } from '../lib/analytics';
+import { BarChart3, TrendingUp, ShoppingCart, Eye, CreditCard, BookOpen } from 'lucide-react';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { getEventCounts, trackEvent, getEventTimeline } from '../lib/analytics';
 
 export const AnalyticsPage = () => {
   const [eventCounts, setEventCounts] = useState<Record<string, number>>({});
+  const [timelineData, setTimelineData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -14,7 +16,9 @@ export const AnalyticsPage = () => {
   const loadAnalytics = async () => {
     try {
       const counts = await getEventCounts();
+      const timeline = await getEventTimeline();
       setEventCounts(counts);
+      setTimelineData(timeline);
     } catch (error) {
       console.error('Error loading analytics:', error);
     } finally {
@@ -31,6 +35,8 @@ export const AnalyticsPage = () => {
       case 'checkout_initiated':
       case 'order_completed':
         return <CreditCard className="h-6 w-6" />;
+      case 'buy_from_blog':
+        return <BookOpen className="h-6 w-6" />;
       default:
         return <TrendingUp className="h-6 w-6" />;
     }
@@ -53,6 +59,8 @@ export const AnalyticsPage = () => {
         return 'bg-orange-500';
       case 'order_completed':
         return 'bg-purple-500';
+      case 'buy_from_blog':
+        return 'bg-rose-500';
       default:
         return 'bg-slate-500';
     }
@@ -119,6 +127,42 @@ export const AnalyticsPage = () => {
             <p className="text-slate-600">
               Start browsing the site to see analytics data appear here
             </p>
+          </div>
+        )}
+
+        {timelineData.length > 0 && (
+          <div className="bg-white rounded-lg shadow-md p-6 mt-8">
+            <h2 className="text-2xl font-bold text-slate-900 mb-6">Events Over Time</h2>
+            <ResponsiveContainer width="100%" height={400}>
+              <LineChart data={timelineData}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                <XAxis
+                  dataKey="time"
+                  tick={{ fontSize: 12 }}
+                  stroke="#64748b"
+                />
+                <YAxis
+                  tick={{ fontSize: 12 }}
+                  stroke="#64748b"
+                />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: '#1e293b',
+                    border: 'none',
+                    borderRadius: '8px',
+                    color: '#fff'
+                  }}
+                />
+                <Line
+                  type="monotone"
+                  dataKey="count"
+                  stroke="#10b981"
+                  strokeWidth={3}
+                  dot={{ fill: '#10b981', r: 4 }}
+                  activeDot={{ r: 6 }}
+                />
+              </LineChart>
+            </ResponsiveContainer>
           </div>
         )}
 
