@@ -1,5 +1,6 @@
 import { ShoppingCart } from 'lucide-react';
 import { Product } from '../types';
+import { formatPrice } from '../lib/currency';
 
 interface ProductCardProps {
   product: Product;
@@ -21,7 +22,7 @@ export const ProductCard = ({ product, onAddToCart }: ProductCardProps) => {
         <p className="text-slate-600 text-sm mb-4 line-clamp-2">{product.description}</p>
         <div className="flex items-center justify-between">
           <span className="text-2xl font-bold text-emerald-600">
-            ${product.price.toFixed(2)}
+            {formatPrice(product.price)}
           </span>
           <button
             onClick={() => onAddToCart(product)}

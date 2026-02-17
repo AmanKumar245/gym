@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { Trash2, Plus, Minus, ShoppingBag } from 'lucide-react';
 import { CartItem } from '../types';
 import { trackEvent } from '../lib/analytics';
+import { formatPrice } from '../lib/currency';
 
 interface CartPageProps {
   cart: CartItem[];
@@ -67,7 +68,7 @@ export const CartPage = ({
                   </h3>
                   <p className="text-slate-600 text-sm mb-2">{item.product.description}</p>
                   <p className="text-lg font-bold text-emerald-600">
-                    ${item.product.price.toFixed(2)}
+                    {formatPrice(item.product.price)}
                   </p>
                 </div>
 
@@ -101,7 +102,7 @@ export const CartPage = ({
 
                 <div className="text-right">
                   <p className="text-xl font-bold text-slate-900">
-                    ${(item.product.price * item.quantity).toFixed(2)}
+                    {formatPrice(item.product.price * item.quantity)}
                   </p>
                 </div>
               </div>
@@ -115,7 +116,7 @@ export const CartPage = ({
               <div className="space-y-3 mb-6">
                 <div className="flex justify-between text-slate-600">
                   <span>Subtotal</span>
-                  <span>${getTotal().toFixed(2)}</span>
+                  <span>{formatPrice(getTotal())}</span>
                 </div>
                 <div className="flex justify-between text-slate-600">
                   <span>Shipping</span>
@@ -123,7 +124,7 @@ export const CartPage = ({
                 </div>
                 <div className="border-t pt-3 flex justify-between text-xl font-bold text-slate-900">
                   <span>Total</span>
-                  <span>${getTotal().toFixed(2)}</span>
+                  <span>{formatPrice(getTotal())}</span>
                 </div>
               </div>
 

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { CheckCircle, Shield, Zap, Heart, ShoppingCart } from 'lucide-react';
 import { trackEvent } from '../lib/analytics';
 import { supabase } from '../lib/supabase';
+import { formatPrice } from '../lib/currency';
 import { Product } from '../types';
 
 interface BlogPageProps {
@@ -259,7 +260,7 @@ export const BlogPage = ({ onBuyFromBlog }: BlogPageProps) => {
 
                   <div className="border-t pt-4 mb-4">
                     <p className="text-2xl font-bold text-slate-900">
-                      ${product.price.toFixed(2)}
+                      {formatPrice(product.price)}
                     </p>
                     <p className="text-sm text-slate-500 mt-1">
                       Stock: {product.stock} units available

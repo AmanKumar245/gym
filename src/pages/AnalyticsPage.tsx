@@ -1,12 +1,15 @@
 import { useState, useEffect } from 'react';
-import { BarChart3, TrendingUp, ShoppingCart, Eye, CreditCard, BookOpen } from 'lucide-react';
+import { BarChart3, TrendingUp, ShoppingCart, Eye, CreditCard, BookOpen, Code } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { getEventCounts, trackEvent, getEventTimeline } from '../lib/analytics';
+import { getEventCounts, trackEvent, getEventTimeline, getEventTypeTimeline } from '../lib/analytics';
 
 export const AnalyticsPage = () => {
   const [eventCounts, setEventCounts] = useState<Record<string, number>>({});
   const [timelineData, setTimelineData] = useState<any[]>([]);
+  const [eventTypeTimelines, setEventTypeTimelines] = useState<Record<string, any[]>>({});
   const [loading, setLoading] = useState(true);
+
+  const eventTypes = ['page_view', 'add_to_cart', 'checkout_initiated', 'order_completed', 'buy_from_blog'];
 
   useEffect(() => {
     trackEvent({ event_type: 'page_view', event_data: { page: 'analytics' } });
@@ -19,6 +22,13 @@ export const AnalyticsPage = () => {
       const timeline = await getEventTimeline();
       setEventCounts(counts);
       setTimelineData(timeline);
+
+      const timelines: Record<string, any[]> = {};
+      for (const eventType of eventTypes) {
+        const typeTimeline = await getEventTypeTimeline(eventType);
+        timelines[eventType] = typeTimeline;
+      }
+      setEventTypeTimelines(timelines);
     } catch (error) {
       console.error('Error loading analytics:', error);
     } finally {
@@ -63,6 +73,23 @@ export const AnalyticsPage = () => {
         return 'bg-rose-500';
       default:
         return 'bg-slate-500';
+    }
+  };
+
+  const getLineColor = (eventType: string) => {
+    switch (eventType) {
+      case 'page_view':
+        return '#3b82f6';
+      case 'add_to_cart':
+        return '#10b981';
+      case 'checkout_initiated':
+        return '#f97316';
+      case 'order_completed':
+        return '#a855f7';
+      case 'buy_from_blog':
+        return '#f43f5e';
+      default:
+        return '#64748b';
     }
   };
 
@@ -132,7 +159,7 @@ export const AnalyticsPage = () => {
 
         {timelineData.length > 0 && (
           <div className="bg-white rounded-lg shadow-md p-6 mt-8">
-            <h2 className="text-2xl font-bold text-slate-900 mb-6">Events Over Time</h2>
+            <h2 className="text-2xl font-bold text-slate-900 mb-6">Overall Events Timeline</h2>
             <ResponsiveContainer width="100%" height={400}>
               <LineChart data={timelineData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
@@ -163,6 +190,51 @@ export const AnalyticsPage = () => {
                 />
               </LineChart>
             </ResponsiveContainer>
+          </div>
+        )}
+
+        {Object.keys(eventTypeTimelines).length > 0 && (
+          <div className="mt-8 space-y-6">
+            <h2 className="text-3xl font-bold text-slate-900 mb-6">Event Type Trends</h2>
+            {eventTypes.map(eventType => (
+              eventTypeTimelines[eventType]?.length > 0 && (
+                <div key={eventType} className="bg-white rounded-lg shadow-md p-6">
+                  <h3 className="text-2xl font-bold text-slate-900 mb-4">
+                    {getEventLabel(eventType)}
+                  </h3>
+                  <ResponsiveContainer width="100%" height={300}>
+                    <LineChart data={eventTypeTimelines[eventType]}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                      <XAxis
+                        dataKey="time"
+                        tick={{ fontSize: 12 }}
+                        stroke="#64748b"
+                      />
+                      <YAxis
+                        tick={{ fontSize: 12 }}
+                        stroke="#64748b"
+                      />
+                      <Tooltip
+                        contentStyle={{
+                          backgroundColor: '#1e293b',
+                          border: 'none',
+                          borderRadius: '8px',
+                          color: '#fff'
+                        }}
+                      />
+                      <Line
+                        type="monotone"
+                        dataKey="count"
+                        stroke={getLineColor(eventType)}
+                        strokeWidth={3}
+                        dot={{ fill: getLineColor(eventType), r: 4 }}
+                        activeDot={{ r: 6 }}
+                      />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+              )
+            ))}
           </div>
         )}
 
@@ -202,13 +274,60 @@ export const AnalyticsPage = () => {
           </div>
         </div>
 
-        <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-6 mt-6">
-          <h3 className="font-bold text-emerald-900 mb-2">API Information</h3>
-          <p className="text-emerald-800 text-sm">
-            All analytics data is accessible via the Supabase API. You can query the{' '}
-            <code className="bg-emerald-100 px-2 py-1 rounded">analytics</code> table to get
-            detailed information about each event, including timestamps and custom event data.
+        <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-6 mt-6 mb-8">
+          <h3 className="font-bold text-emerald-900 mb-4 flex items-center">
+            <Code className="h-5 w-5 mr-2" />
+            How to Fetch Analytics Data
+          </h3>
+          <p className="text-emerald-800 text-sm mb-4">
+            All analytics data is stored in the Supabase <code className="bg-emerald-100 px-2 py-1 rounded">analytics</code> table and can be accessed via the Supabase JavaScript client.
           </p>
+
+          <div className="bg-white rounded-lg p-4 mb-4 overflow-x-auto">
+            <pre className="text-xs text-slate-800 font-mono">
+{`import { supabase } from './lib/supabase';
+
+// Fetch all analytics events
+const { data, error } = await supabase
+  .from('analytics')
+  .select('*')
+  .order('created_at', { ascending: false });
+
+// Fetch specific event type
+const { data: addToCart } = await supabase
+  .from('analytics')
+  .select('*')
+  .eq('event_type', 'add_to_cart')
+  .order('created_at', { ascending: false });
+
+// Fetch with custom data filter
+const { data: orders } = await supabase
+  .from('analytics')
+  .select('*')
+  .eq('event_type', 'order_completed')
+  .gt('created_at', '2024-01-01');
+
+// Get event count by type
+const { data: allEvents } = await supabase
+  .from('analytics')
+  .select('event_type');
+
+const counts = {};
+allEvents?.forEach(event => {
+  counts[event.event_type] = (counts[event.event_type] || 0) + 1;
+});`}
+            </pre>
+          </div>
+
+          <div className="text-emerald-800 text-sm space-y-2">
+            <p><strong>Database Schema:</strong></p>
+            <ul className="list-disc list-inside space-y-1 ml-2">
+              <li><code className="bg-emerald-100 px-1 rounded">id</code> - Unique event ID</li>
+              <li><code className="bg-emerald-100 px-1 rounded">event_type</code> - Type of event (page_view, add_to_cart, etc.)</li>
+              <li><code className="bg-emerald-100 px-1 rounded">event_data</code> - JSON object with additional data</li>
+              <li><code className="bg-emerald-100 px-1 rounded">created_at</code> - Timestamp of event</li>
+            </ul>
+          </div>
         </div>
       </div>
     </div>

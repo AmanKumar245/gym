@@ -81,3 +81,32 @@ export const getEventTimeline = async () => {
     count
   }));
 };
+
+export const getEventTypeTimeline = async (eventType: string) => {
+  const { data, error } = await supabase
+    .from('analytics')
+    .select('created_at')
+    .eq('event_type', eventType)
+    .order('created_at', { ascending: true });
+
+  if (error) {
+    console.error(`Error fetching ${eventType} timeline:`, error);
+    return [];
+  }
+
+  const timelineMap: Record<string, number> = {};
+
+  data?.forEach(item => {
+    const date = new Date(item.created_at);
+    const hour = date.getHours();
+    const dateStr = date.toLocaleDateString();
+    const timeKey = `${dateStr} ${hour}:00`;
+
+    timelineMap[timeKey] = (timelineMap[timeKey] || 0) + 1;
+  });
+
+  return Object.entries(timelineMap).map(([time, count]) => ({
+    time,
+    count
+  }));
+};

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { CreditCard, CheckCircle } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { trackEvent } from '../lib/analytics';
+import { formatPrice } from '../lib/currency';
 import { CartItem, Order, OrderItem } from '../types';
 
 interface CheckoutPageProps {
@@ -268,7 +269,7 @@ export const CheckoutPage = ({ cart, getTotal, onOrderComplete }: CheckoutPagePr
                 disabled={isProcessing}
                 className="w-full bg-emerald-600 hover:bg-emerald-700 disabled:bg-slate-400 text-white py-4 rounded-lg font-bold text-lg transition-colors"
               >
-                {isProcessing ? 'Processing...' : `Pay $${getTotal().toFixed(2)}`}
+                {isProcessing ? 'Processing...' : `Pay ${formatPrice(getTotal())}`}
               </button>
             </form>
           </div>
@@ -284,7 +285,7 @@ export const CheckoutPage = ({ cart, getTotal, onOrderComplete }: CheckoutPagePr
                       {item.product.name} x {item.quantity}
                     </span>
                     <span className="text-slate-900 font-medium">
-                      ${(item.product.price * item.quantity).toFixed(2)}
+                      {formatPrice(item.product.price * item.quantity)}
                     </span>
                   </div>
                 ))}
@@ -293,7 +294,7 @@ export const CheckoutPage = ({ cart, getTotal, onOrderComplete }: CheckoutPagePr
               <div className="border-t pt-4 space-y-2">
                 <div className="flex justify-between text-slate-600">
                   <span>Subtotal</span>
-                  <span>${getTotal().toFixed(2)}</span>
+                  <span>{formatPrice(getTotal())}</span>
                 </div>
                 <div className="flex justify-between text-slate-600">
                   <span>Shipping</span>
@@ -301,7 +302,7 @@ export const CheckoutPage = ({ cart, getTotal, onOrderComplete }: CheckoutPagePr
                 </div>
                 <div className="flex justify-between text-xl font-bold text-slate-900 pt-2">
                   <span>Total</span>
-                  <span>${getTotal().toFixed(2)}</span>
+                  <span>{formatPrice(getTotal())}</span>
                 </div>
               </div>
             </div>
